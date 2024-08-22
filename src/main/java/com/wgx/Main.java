@@ -1,5 +1,6 @@
 package com.wgx;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.Header;
 import cn.hutool.http.HttpRequest;
@@ -20,6 +21,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * 主程序
@@ -29,16 +32,18 @@ import java.util.concurrent.ThreadPoolExecutor;
  */
 public class Main {
     //xmly主站
-    private static final String XIMALAYAURL = "https://www.ximalaya.com";
+    public static final String XIMALAYAURL = "https://www.ximalaya.com";
 
     //获取用户信息url
-    private static final String USERURL = "https://www.ximalaya.com/revision/my/getCurrentUserInfo";
+    public static final String USERURL = "https://www.ximalaya.com/revision/my/getCurrentUserInfo";
     //获取专辑url
-    private static final String ALBUMURL = "https://www.ximalaya.com/revision/album/v1/getTracksList";
+    public static final String ALBUMURL = "https://www.ximalaya.com/revision/album/v1/getTracksList";
     //获取声音信息url,后面只要带个数字就可以访问成功,但还是使用时间戳较好
-    private static final String BASEURL = "https://www.ximalaya.com/mobile-playpage/track/v3/baseInfo/";
+    public static final String BASEURL = "https://www.ximalaya.com/mobile-playpage/track/v3/baseInfo/";
     //失败重试次数
-    private static final int RETRYCOUNT = 3;
+    public static final int RETRYCOUNT = 3;
+    //解析声音信息url正则
+    private final static String PATTERN = "sound/([0-9]+)";
 
     private static final Logger logger = LogManager.getLogger(Main.class);
 
@@ -54,10 +59,10 @@ public class Main {
             return;
         }
         //先检测cookie是否有效
-        String body = HttpRequest.get(USERURL).addHeaders(getHeaderMap(false, null)).execute().body();
-        JSONObject jsonObject = JSONObject.parseObject(body);
-        String ret = jsonObject.getString("ret");
-        if (HttpStatus.HTTP_OK != Integer.parseInt(ret)) {
+        String baseBody = HttpRequest.get(USERURL).addHeaders(getHeaderMap(false, null)).execute().body();
+        JSONObject jsonObject = JSONObject.parseObject(baseBody);
+        String temp = jsonObject.getString("ret");
+        if (HttpStatus.HTTP_OK != Integer.parseInt(temp)) {
             logger.error(jsonObject.getString("msg"));
             return;
         }
@@ -69,16 +74,80 @@ public class Main {
             logger.error("请填写要下载的东西");
             return;
         }
+        long start = System.currentTimeMillis();
         if (StrUtil.isNotEmpty(album)) {
             //1、分页处理专辑数据
             Map<String, JSONArray> map = DealAlbum();
             //2、获取专辑每个数据基本信息
             Map<String, Map<String, String>> albumMap = getAlbum(map);
+            logger.info("==========即将保存数据到本地,请耐心等待=======");
             //3、解密及下载数据到本地
-            // DownAlbum(albumMap);
+            assert albumMap != null;
+            DownAlbum(albumMap);
 
         } else {
-
+            //批量多个声音下载
+            String[] split = info.getSounds().split(";");
+            Pattern r = Pattern.compile(PATTERN);
+            Map<String, Map<String, String>> albumMap = new HashMap<>();
+            for (String trackId : split) {
+                //获取下对应的trackid
+                Matcher m = r.matcher(trackId);
+                if (m.find()) {
+                    trackId = m.group(1);
+                }
+                Long finalTrackId = Long.parseLong(trackId);
+                int retry = 1;
+                //失败则进行重试
+                Map<String, String> soundMap;
+                boolean flag = false;
+                while (retry <= RETRYCOUNT) {
+                    String body = HttpRequest.get(BASEURL + new Date().getTime()).
+                            form(getBaseParamMap(finalTrackId)).addHeaders(getHeaderMap(true, finalTrackId)).execute().body();
+                    //{"reqId":"07fbdb9b-64837146","ret":1001,"msg":"系统繁忙，请稍后再试!"}调用次数达到上限了
+                    Integer ret = JSONObject.parseObject(body).getInteger("ret");
+                    if (0 != ret) {
+                        logger.error("声音'{}'获取时候报错:{},进行重试,当前第{}次重试", finalTrackId, JSONObject.parseObject(body).getString("msg"), retry);
+                        retry++;
+                        continue;
+                    }
+                    JSONArray playArray = JSONObject.parseObject(body).getJSONObject("trackInfo").getJSONArray("playUrlList");
+                    //获取专辑名称
+                    String albumTitle = JSONObject.parseObject(body).getJSONObject("albumInfo").getString("title");
+                    albumTitle = DataUtil.dealString(albumTitle);
+                    if (albumMap.containsKey(albumTitle)) {
+                        soundMap = albumMap.get(albumTitle);
+                    } else {
+                        soundMap = new HashMap<>();
+                        flag = true;
+                    }
+                    //声音名称
+                    String title = JSONObject.parseObject(body).getJSONObject("trackInfo").getString("title");
+                    title = DataUtil.dealString(title);
+                    for (int j = 0; j < playArray.size(); j++) {
+                        JSONObject palyObj = playArray.getJSONObject(j);
+                        //测试的有四种音频 M4A_64 MP3_64 M4A_24 MP3_32
+                        if (1 == palyObj.getInteger("qualityLevel") &&
+                                (palyObj.getString("type").contains("128") || palyObj.getString("type").contains("64"))) {
+                            soundMap.put(title, palyObj.getString("url"));
+                            break;
+                        }
+                    }
+                    retry = Integer.MAX_VALUE;
+                    if(flag){
+                        albumMap.put(albumTitle, soundMap);
+                    }
+                }
+            }
+            DownAlbum(albumMap);
+        }
+        //需要关闭线程否则程序不会停止
+        ThreadPool.shutdown();
+        while (true) {// 等待所有任务都执行结束
+            if (ThreadPool.getActiveCount() <= 0) {
+                logger.info("====================总耗时：" + (System.currentTimeMillis() - start) / 1000 + "秒=================");
+                break;
+            }
         }
     }
 
@@ -91,14 +160,24 @@ public class Main {
         String savePath = info.getSavePath();
         for (Map.Entry<String, Map<String, String>> entry : albumMap.entrySet()) {
             String albumTitle = entry.getKey();
-            new File(savePath + File.separator + albumTitle).mkdirs();
+            File file = new File(savePath + File.separator + albumTitle);
+            if (!file.exists()) {
+                file.mkdirs();
+            }
             Map<String, String> soundMap = entry.getValue();
+            if (CollUtil.isEmpty(soundMap)) {
+                logger.error("接口调用似乎已经达到上限,请明日再试!");
+                return;
+            }
             for (Map.Entry<String, String> sound : soundMap.entrySet()) {
                 String soundName = sound.getKey();
                 String soundCryptLink = SoundCryptUtil.getSoundCryptLink(sound.getValue());
-                //threadPool.submit(() -> {
-                    HttpUtil.downloadFile(soundCryptLink, savePath + File.separator + albumTitle + File.separator + soundName + ".m4a");
-                //});
+                String soundPath = savePath + File.separator + albumTitle + File.separator + soundName + ".m4a";
+                if (!new File(soundPath).exists()) {
+                    threadPool.submit(() -> {
+                        HttpUtil.downloadFile(soundCryptLink, soundPath);
+                    });
+                }
             }
         }
     }
@@ -116,10 +195,11 @@ public class Main {
                 logger.error("请检查partOfAlbum参数");
                 return null;
             }
-            start = Integer.parseInt(split1[0]);
+            start = Integer.parseInt(split1[0]) - 1;
             end = Integer.parseInt(split1[1]);
         }
 
+        ThreadPoolExecutor threadPool = ThreadPool.getThreadPool();
         Map<String, Map<String, String>> returnMap = new HashMap<>();
         for (Map.Entry<String, JSONArray> entry : map.entrySet()) {
             String albumTitle = entry.getKey();
@@ -132,35 +212,44 @@ public class Main {
             }
             Map<String, String> soundMap = new HashMap<>();
             for (int i = start; i < end; i++) {
-                int retry = 1;
                 JSONObject jsonObject = array.getJSONObject(i);
                 Long trackId = jsonObject.getLong("id");
 
-                //失败则进行重试
-                while (retry <= RETRYCOUNT) {
-                    String body = HttpRequest.get(BASEURL + new Date().getTime()).
-                            form(getBaseParamMap(trackId)).addHeaders(getHeaderMap(true, trackId)).execute().body();
-                    if (0 != JSONObject.parseObject(body).getInteger("ret")) {
-                        logger.error("该声音{}获取时候报错{},进行重试,当前第{}次重试", trackId, jsonObject.getString("msg"), retry);
-                        retry++;
-                        continue;
-                    }
-                    JSONArray playArray = JSONObject.parseObject(body).getJSONObject("trackInfo").getJSONArray("playUrlList");
-                    //声音名称
-                    String title = JSONObject.parseObject(body).getJSONObject("trackInfo").getString("title");
-                    title = DataUtil.dealString(title);
-                    for (int j = 0; j < playArray.size(); j++) {
-                        JSONObject palyObj = playArray.getJSONObject(j);
-                        //测试的有四种音频 M4A_64 MP3_64 M4A_24 MP3_32
-                        if (1 == palyObj.getInteger("qualityLevel") &&
-                                (palyObj.getString("type").contains("128") || palyObj.getString("type").contains("64"))) {
-                            soundMap.put(title, palyObj.getString("url"));
-                            break;
+                threadPool.submit(() -> {
+                    int retry = 1;
+                    //失败则进行重试
+                    while (retry <= RETRYCOUNT) {
+                        String body = HttpRequest.get(BASEURL + new Date().getTime()).
+                                form(getBaseParamMap(trackId)).addHeaders(getHeaderMap(true, trackId)).execute().body();
+                        //{"reqId":"07fbdb9b-64837146","ret":1001,"msg":"系统繁忙，请稍后再试!"}调用次数达到上限了
+                        Integer ret = JSONObject.parseObject(body).getInteger("ret");
+                        if (0 != ret) {
+                            logger.error("专辑'{}',声音'{}'获取时候报错:{},进行重试,当前第{}次重试", albumTitle, trackId, JSONObject.parseObject(body).getString("msg"), retry);
+                            retry++;
+                            continue;
                         }
+                        JSONArray playArray = JSONObject.parseObject(body).getJSONObject("trackInfo").getJSONArray("playUrlList");
+                        //声音名称
+                        String title = JSONObject.parseObject(body).getJSONObject("trackInfo").getString("title");
+                        title = DataUtil.dealString(title);
+                        for (int j = 0; j < playArray.size(); j++) {
+                            JSONObject palyObj = playArray.getJSONObject(j);
+                            //测试的有四种音频 M4A_64 MP3_64 M4A_24 MP3_32
+                            if (1 == palyObj.getInteger("qualityLevel") &&
+                                    (palyObj.getString("type").contains("128") || palyObj.getString("type").contains("64"))) {
+                                soundMap.put(title, palyObj.getString("url"));
+                                break;
+                            }
+                        }
+                        retry = Integer.MAX_VALUE;
                     }
-                    retry = -1;
+                });
+            }
+            while (true) {// 等待所有任务都执行结束
+                if (ThreadPool.getActiveCount() <= 0) {
+                    logger.info("获取专辑'{}'每条数据基本信息完成", albumTitle);
+                    break;
                 }
-
             }
             returnMap.put(albumTitle, soundMap);
         }
@@ -191,6 +280,7 @@ public class Main {
             albumTitle = DataUtil.dealString(albumTitle);
             map.put(ablum, totalCount);
             chineseMap.put(ablum, albumTitle);
+            logger.info("专辑<<{}>>查询完成,共{}条声音", albumTitle, totalCount);
         }
 
         //多个专辑的id和中文名
