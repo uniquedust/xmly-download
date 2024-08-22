@@ -267,7 +267,6 @@ public class Main {
         //获取专辑名称和声音数量
         for (String ablum : split) {
             String body = HttpRequest.get(ALBUMURL).form(getParamMap(ablum)).addHeaders(getHeaderMap(false, null)).execute().body();
-            System.out.println(body);
             JSONObject jsonObject = JSON.parseObject(body);
             if (HttpStatus.HTTP_OK != Integer.parseInt(jsonObject.getString("ret"))) {
                 logger.error("该专辑{}获取时候报错{}", ablum, jsonObject.getString("msg"));
@@ -364,7 +363,6 @@ public class Main {
         Map<String, Object> map = new HashMap<>();
         map.put("device", "www2");
         map.put("trackId", id);
-        //todo 不知道有没有2的
         map.put("trackQualityLevel", 1);
         return map;
     }
