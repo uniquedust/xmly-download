@@ -25,6 +25,7 @@ public class DataUtil {
         Properties properties = new Properties();
         try {
             InputStream inputStream = DataUtil.class.getClassLoader().getResourceAsStream("application.properties");
+            //设置字符集,否则中文会乱码
             InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
             properties.load(reader);
         } catch (IOException e) {
@@ -36,6 +37,7 @@ public class DataUtil {
         info.setPartOfAlbum(properties.getProperty("partOfAlbum"));
         info.setAlbum(properties.getProperty("album"));
         info.setSounds(properties.getProperty("sounds"));
+        info.setIsPc(Boolean.parseBoolean(properties.getProperty("isPc", "false")));
         return info;
     }
 

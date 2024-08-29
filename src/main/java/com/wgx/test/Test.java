@@ -1,5 +1,6 @@
 package com.wgx.test;
 
+import cn.hutool.http.Header;
 import cn.hutool.http.HttpRequest;
 import com.wgx.Main;
 
@@ -19,7 +20,10 @@ public class Test {
                 form(Main.getBaseParamMap(259432946l)).addHeaders(Main.getHeaderMap(true, 259432946l)).execute().body();
         System.out.println(body);*/
 
-        String line ="https://www.ximalaya.com/sound/1724290971564";
+        String body = HttpRequest.get(Main.ALBUMURL).form(Main.getParamMap("81880118")).addHeaders(Main.getHeaderMap(false, null,false)).execute().body();
+        System.out.println(body);
+
+   /*     String line ="https://www.ximalaya.com/sound/1724290971564";
         Pattern r = Pattern.compile(PATTERN);
         Matcher m = r.matcher(line);
         while (m.find()) {
@@ -27,6 +31,6 @@ public class Test {
             System.out.println(m.group(1));
             System.out.println(m.group(2));
             System.out.println(m.groupCount());
-        }
+        }*/
     }
 }

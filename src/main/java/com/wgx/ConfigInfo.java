@@ -10,9 +10,10 @@ import lombok.Data;
  */
 @Data
 public class ConfigInfo {
-    //保存路径
+    private Boolean isPc;
+
     private String savePath;
-    //cookie
+
     private String cookie;
 
     private String sounds;
