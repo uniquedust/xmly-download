@@ -4,29 +4,29 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
 /**
- * Ê¹ÓÃnodejs¿â½âÎöxmÎÄ¼ş
+ * ä½¿ç”¨nodejsåº“è§£æxmæ–‡ä»¶
  *
  * @author wgx
  * @date 2024/8/30
  */
 public class NodeJsAnalysisUtil {
     public static void main(String[] args) {
-        // Node.js ½Å±¾µÄÂ·¾¶
+        // Node.js è„šæœ¬çš„è·¯å¾„
         String scriptPath = "d:/test3.js";
 
-        // Ê¹ÓÃ ProcessBuilder Æô¶¯ Node.js ½Å±¾
+        // ä½¿ç”¨ ProcessBuilder å¯åŠ¨ Node.js è„šæœ¬
         try {
             ProcessBuilder pb = new ProcessBuilder("node", scriptPath);
             Process process = pb.start();
 
-            // ¶ÁÈ¡Êä³ö
+            // è¯»å–è¾“å‡º
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String line;
             while ((line = reader.readLine()) != null) {
                 System.out.println(line);
             }
 
-            // µÈ´ı×Ó½ø³Ì½áÊø
+            // ç­‰å¾…å­è¿›ç¨‹ç»“æŸ
             int exitCode = process.waitFor();
             System.out.println("Node.js script exited with code: " + exitCode);
 

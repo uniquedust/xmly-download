@@ -3,7 +3,7 @@ package com.wgx.domain;
 import lombok.Data;
 
 /**
- * ÅäÖÃÀà
+ * é…ç½®ç±»å®ä½“
  *
  * @author wgx
  * @date 2024/8/20

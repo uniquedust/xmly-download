@@ -7,7 +7,7 @@ import java.security.spec.AlgorithmParameterSpec;
 import java.util.Base64;
 
 /**
- * pc端的参数解密工具
+ * pc绔殑鍙傛暟瑙ｅ瘑宸ュ叿
  * @author wgx
  * @date 2024/8/27
  */
@@ -28,7 +28,7 @@ public class PcAesDecryptUtil {
     }
 
     /**
-     * 十六进制到字节的转换 对应CryptoJS.enc.Hex.parse
+     * 鍗佸叚杩涘埗鍒板瓧鑺傜殑杞崲 瀵瑰簲CryptoJS.enc.Hex.parse
      */
     private static byte[] parseHex(String hexString) {
         int len = hexString.length();

@@ -25,29 +25,29 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Ö÷³ÌĞò,Õë¶Ôurl½øĞĞÏÂÔØ
+ * ä¸»ç¨‹åº,é’ˆå¯¹urlè¿›è¡Œä¸‹è½½
  *
  * @author wgx
  * @date 2024/8/20
  */
 public class Main {
-    //xmlyÖ÷Õ¾
+    //xmlyä¸»ç«™
     public static final String XIMALAYAURL = "https://www.ximalaya.com";
 
-    //»ñÈ¡ÓÃ»§ĞÅÏ¢url
+    //è·å–ç”¨æˆ·ä¿¡æ¯url
     public static final String USERURL = "https://www.ximalaya.com/revision/my/getCurrentUserInfo";
-    //»ñÈ¡×¨¼­url
+    //è·å–ä¸“è¾‘url
     public static final String ALBUMURL = "https://www.ximalaya.com/revision/album/v1/getTracksList";
-    //»ñÈ¡pc×¨¼­url
+    //è·å–pcä¸“è¾‘url
     public static final String PCALBUMURL = "https://pc.ximalaya.com/simple-revision-for-pc/album/v1/getTracksList";
 
-    //»ñÈ¡ÉùÒôĞÅÏ¢url,ºóÃæÖ»Òª´ø¸öÊı×Ö¾Í¿ÉÒÔ·ÃÎÊ³É¹¦,µ«»¹ÊÇÊ¹ÓÃÊ±¼ä´Á½ÏºÃ
+    //è·å–å£°éŸ³ä¿¡æ¯url,åé¢åªè¦å¸¦ä¸ªæ•°å­—å°±å¯ä»¥è®¿é—®æˆåŠŸ,ä½†è¿˜æ˜¯ä½¿ç”¨æ—¶é—´æˆ³è¾ƒå¥½
     public static final String BASEURL = "https://www.ximalaya.com/mobile-playpage/track/v3/baseInfo/";
-    //Ê§°ÜÖØÊÔ´ÎÊı
+    //å¤±è´¥é‡è¯•æ¬¡æ•°
     public static final int RETRYCOUNT = 3;
-    //½âÎöÉùÒôĞÅÏ¢urlÕıÔò
+    //è§£æå£°éŸ³ä¿¡æ¯urlæ­£åˆ™
     private final static String PATTERN = "sound/([0-9]+)";
-    //pc½âÃÜÊ¹ÓÃµÄsecretKey
+    //pcè§£å¯†ä½¿ç”¨çš„secretKey
     private final static String SECRETKEY = "aaad3e4fd540b0f79dca95606e72bf93";
 
 
@@ -61,10 +61,10 @@ public class Main {
 
     public static void main(String[] args) {
         if (StrUtil.isEmpty(info.getCookie())) {
-            logger.error("cookie²»ÄÜÎª¿Õ");
+            logger.error("cookieä¸èƒ½ä¸ºç©º");
             return;
         }
-        //ÏÈ¼ì²âcookieÊÇ·ñÓĞĞ§
+        //å…ˆæ£€æµ‹cookieæ˜¯å¦æœ‰æ•ˆ
         String baseBody = HttpRequest.get(USERURL).addHeaders(getHeaderMap(false, null, true)).execute().body();
         JSONObject jsonObject = JSONObject.parseObject(baseBody);
         String temp = jsonObject.getString("ret");
@@ -73,52 +73,52 @@ public class Main {
             return;
         }
 
-        logger.info("µÇÂ¼³É¹¦!»¶Ó­ÓÃ»§:{}!", jsonObject.getJSONObject("data").getString("userName"));
+        logger.info("ç™»å½•æˆåŠŸ!æ¬¢è¿ç”¨æˆ·:{}!", jsonObject.getJSONObject("data").getString("userName"));
 
         String album = info.getAlbum();
         if (StrUtil.isEmpty(album) && StrUtil.isEmpty(info.getSounds())) {
-            logger.error("ÇëÌîĞ´ÒªÏÂÔØµÄ¶«Î÷");
+            logger.error("è¯·å¡«å†™è¦ä¸‹è½½çš„ä¸œè¥¿");
             return;
         }
         long start = System.currentTimeMillis();
         if (StrUtil.isNotEmpty(album)) {
-            //1¡¢·ÖÒ³´¦Àí×¨¼­Êı¾İ
+            //1ã€åˆ†é¡µå¤„ç†ä¸“è¾‘æ•°æ®
             Map<String, JSONArray> map = DealAlbum();
-            //2¡¢»ñÈ¡×¨¼­Ã¿¸öÊı¾İ»ù±¾ĞÅÏ¢
+            //2ã€è·å–ä¸“è¾‘æ¯ä¸ªæ•°æ®åŸºæœ¬ä¿¡æ¯
             Map<String, Map<String, String>> albumMap = getAlbum(map);
-            logger.info("==========¼´½«±£´æÊı¾İµ½±¾µØ,ÇëÄÍĞÄµÈ´ı=======" );
-            //3¡¢½âÃÜ¼°ÏÂÔØÊı¾İµ½±¾µØ
+            logger.info("==========å³å°†ä¿å­˜æ•°æ®åˆ°æœ¬åœ°,è¯·è€å¿ƒç­‰å¾…=======" );
+            //3ã€è§£å¯†åŠä¸‹è½½æ•°æ®åˆ°æœ¬åœ°
             assert albumMap != null;
             DownAlbum(albumMap);
 
         } else {
-            //ÅúÁ¿¶à¸öÉùÒôÏÂÔØ
+            //æ‰¹é‡å¤šä¸ªå£°éŸ³ä¸‹è½½
             String[] split = info.getSounds().split(";");
             Pattern r = Pattern.compile(PATTERN);
             Map<String, Map<String, String>> albumMap = new HashMap<>();
             for (String trackId : split) {
-                //»ñÈ¡ÏÂ¶ÔÓ¦µÄtrackid
+                //è·å–ä¸‹å¯¹åº”çš„trackid
                 Matcher m = r.matcher(trackId);
                 if (m.find()) {
                     trackId = m.group(1);
                 }
                 Long finalTrackId = Long.parseLong(trackId);
                 int retry = 1;
-                //Ê§°ÜÔò½øĞĞÖØÊÔ
+                //å¤±è´¥åˆ™è¿›è¡Œé‡è¯•
                 Map<String, String> soundMap;
                 boolean flag = false;
                 while (retry <= RETRYCOUNT) {
                     String body = HttpRequest.get(BASEURL + new Date().getTime()).
                             form(getBaseParamMap(finalTrackId)).addHeaders(getHeaderMap(true, finalTrackId, true)).execute().body();
-                    //{"reqId":"07fbdb9b-64837146","ret":1001,"msg":"ÏµÍ³·±Ã¦£¬ÇëÉÔºóÔÙÊÔ!"}µ÷ÓÃ´ÎÊı´ïµ½ÉÏÏŞÁË
+                    //{"reqId":"07fbdb9b-64837146","ret":1001,"msg":"ç³»ç»Ÿç¹å¿™ï¼Œè¯·ç¨åå†è¯•!"}è°ƒç”¨æ¬¡æ•°è¾¾åˆ°ä¸Šé™äº†
                     Integer ret = JSONObject.parseObject(body).getInteger("ret");
                     if (0 != ret) {
-                        logger.error("ÉùÒô'{}'»ñÈ¡Ê±ºò±¨´í:{},½øĞĞÖØÊÔ,µ±Ç°µÚ{}´ÎÖØÊÔ", finalTrackId, JSONObject.parseObject(body).getString("msg"), retry);
+                        logger.error("å£°éŸ³'{}'è·å–æ—¶å€™æŠ¥é”™:{},è¿›è¡Œé‡è¯•,å½“å‰ç¬¬{}æ¬¡é‡è¯•", finalTrackId, JSONObject.parseObject(body).getString("msg"), retry);
                         retry++;
                         continue;
                     }
                     JSONArray playArray = JSONObject.parseObject(body).getJSONObject("trackInfo").getJSONArray("playUrlList");
-                    //»ñÈ¡×¨¼­Ãû³Æ
+                    //è·å–ä¸“è¾‘åç§°
                     String albumTitle = JSONObject.parseObject(body).getJSONObject("albumInfo").getString("title");
                     albumTitle = DataUtil.dealString(albumTitle);
                     if (albumMap.containsKey(albumTitle)) {
@@ -127,12 +127,12 @@ public class Main {
                         soundMap = new HashMap<>();
                         flag = true;
                     }
-                    //ÉùÒôÃû³Æ
+                    //å£°éŸ³åç§°
                     String title = JSONObject.parseObject(body).getJSONObject("trackInfo").getString("title");
                     title = DataUtil.dealString(title);
                     for (int j = 0; j < playArray.size(); j++) {
                         JSONObject palyObj = playArray.getJSONObject(j);
-                        //²âÊÔµÄÓĞËÄÖÖÒôÆµ M4A_64 MP3_64 M4A_24 MP3_32
+                        //æµ‹è¯•çš„æœ‰å››ç§éŸ³é¢‘ M4A_64 MP3_64 M4A_24 MP3_32
                         if (1 == palyObj.getInteger("qualityLevel") &&
                                 (palyObj.getString("type").contains("128") || palyObj.getString("type").contains("64"))) {
                             soundMap.put(title, palyObj.getString("url"));
@@ -147,21 +147,21 @@ public class Main {
             }
             DownAlbum(albumMap);
         }
-        //ĞèÒª¹Ø±ÕÏß³Ì·ñÔò³ÌĞò²»»áÍ£Ö¹
+        //éœ€è¦å…³é—­çº¿ç¨‹å¦åˆ™ç¨‹åºä¸ä¼šåœæ­¢
         ThreadPool.shutdown();
-        while (true) {// µÈ´ıËùÓĞÈÎÎñ¶¼Ö´ĞĞ½áÊø
+        while (true) {// ç­‰å¾…æ‰€æœ‰ä»»åŠ¡éƒ½æ‰§è¡Œç»“æŸ
             if (ThreadPool.getActiveCount() <= 0) {
-                logger.info("====================×ÜºÄÊ±£º" + (System.currentTimeMillis() - start) / 1000 + "Ãë=================");
+                logger.info("====================æ€»è€—æ—¶ï¼š" + (System.currentTimeMillis() - start) / 1000 + "ç§’=================");
                 break;
             }
         }
     }
 
     /**
-     * ½âÃÜ¼°ÏÂÔØÊı¾İµ½±¾µØ
+     * è§£å¯†åŠä¸‹è½½æ•°æ®åˆ°æœ¬åœ°
      */
     private static void DownAlbum(Map<String, Map<String, String>> albumMap) {
-        //Ê¹ÓÃ¶àÏß³Ì±£´æÎÄ¼ş
+        //ä½¿ç”¨å¤šçº¿ç¨‹ä¿å­˜æ–‡ä»¶
         ThreadPoolExecutor threadPool = ThreadPool.getThreadPool();
         String savePath = info.getSavePath();
         for (Map.Entry<String, Map<String, String>> entry : albumMap.entrySet()) {
@@ -172,10 +172,10 @@ public class Main {
             }
             Map<String, String> soundMap = entry.getValue();
             if (CollUtil.isEmpty(soundMap)) {
-                logger.error("½Ó¿Úµ÷ÓÃËÆºõÒÑ¾­´ïµ½ÉÏÏŞ,ÇëÃ÷ÈÕÔÙÊÔ!");
+                logger.error("æ¥å£è°ƒç”¨ä¼¼ä¹å·²ç»è¾¾åˆ°ä¸Šé™,è¯·æ˜æ—¥å†è¯•!");
                 return;
             }
-            logger.info("×¨¼­{}³É¹¦»ñÈ¡µ½{}ÌõÉùÒô", albumTitle, soundMap.size());
+            logger.info("ä¸“è¾‘{}æˆåŠŸè·å–åˆ°{}æ¡å£°éŸ³", albumTitle, soundMap.size());
             for (Map.Entry<String, String> sound : soundMap.entrySet()) {
                 String soundName = sound.getKey();
                 String soundCryptLink;
@@ -195,7 +195,7 @@ public class Main {
     }
 
     /**
-     * »ñÈ¡×¨¼­Ã¿¸öÊı¾İ»ù±¾ĞÅÏ¢
+     * è·å–ä¸“è¾‘æ¯ä¸ªæ•°æ®åŸºæœ¬ä¿¡æ¯
      */
     private static Map<String, Map<String, String>> getAlbum(Map<String, JSONArray> map) {
         String partOfAlbum = info.getPartOfAlbum();
@@ -204,7 +204,7 @@ public class Main {
         if (StrUtil.isNotEmpty(partOfAlbum)) {
             String[] split1 = partOfAlbum.split("-");
             if (split1.length != 2) {
-                logger.error("Çë¼ì²épartOfAlbum²ÎÊı");
+                logger.error("è¯·æ£€æŸ¥partOfAlbumå‚æ•°");
                 return null;
             }
             start = Integer.parseInt(split1[0]) - 1;
@@ -226,11 +226,11 @@ public class Main {
             for (int i = start; i < end; i++) {
                 JSONObject jsonObject = array.getJSONObject(i);
                 Long trackId = jsonObject.getLong("id");
-                //Ã¿ÇëÇó30¸ö,Ë¯ÉÏ1s
-                //todo ĞèÒª²âÊÔÏÂ¿Í»§¶ËÊÇ¸ù¾İÆµÂÊÏŞÖÆ»¹ÊÇ×ÜÊıÀ´½øĞĞÏŞÖÆµÄ
+                //æ¯è¯·æ±‚30ä¸ª,ç¡ä¸Š1s
+                //todo éœ€è¦æµ‹è¯•ä¸‹å®¢æˆ·ç«¯æ˜¯æ ¹æ®é¢‘ç‡é™åˆ¶è¿˜æ˜¯æ€»æ•°æ¥è¿›è¡Œé™åˆ¶çš„
                /* if(i%30==0){
                     try {
-                        System.out.println("Ë¯1s");
+                        System.out.println("ç¡1s");
                         Thread.sleep(1000);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
@@ -238,24 +238,24 @@ public class Main {
                 }*/
                 threadPool.submit(() -> {
                     int retry = 1;
-                    //Ê§°ÜÔò½øĞĞÖØÊÔ
+                    //å¤±è´¥åˆ™è¿›è¡Œé‡è¯•
                     while (retry <= RETRYCOUNT) {
                         String body = HttpRequest.get(BASEURL + new Date().getTime()).
                                 form(getBaseParamMap(trackId)).addHeaders(getHeaderMap(true, trackId, true)).execute().body();
-                        //{"reqId":"07fbdb9b-64837146","ret":1001,"msg":"ÏµÍ³·±Ã¦£¬ÇëÉÔºóÔÙÊÔ!"}µ÷ÓÃ´ÎÊı´ïµ½ÉÏÏŞÁË
+                        //{"reqId":"07fbdb9b-64837146","ret":1001,"msg":"ç³»ç»Ÿç¹å¿™ï¼Œè¯·ç¨åå†è¯•!"}è°ƒç”¨æ¬¡æ•°è¾¾åˆ°ä¸Šé™äº†
                         Integer ret = JSONObject.parseObject(body).getInteger("ret");
                         if (0 != ret) {
-                            logger.error("×¨¼­'{}',ÉùÒô'{}'»ñÈ¡Ê±ºò±¨´í:{},½øĞĞÖØÊÔ,µ±Ç°µÚ{}´ÎÖØÊÔ", albumTitle, trackId, JSONObject.parseObject(body).getString("msg"), retry);
+                            logger.error("ä¸“è¾‘'{}',å£°éŸ³'{}'è·å–æ—¶å€™æŠ¥é”™:{},è¿›è¡Œé‡è¯•,å½“å‰ç¬¬{}æ¬¡é‡è¯•", albumTitle, trackId, JSONObject.parseObject(body).getString("msg"), retry);
                             retry++;
                             continue;
                         }
                         JSONArray playArray = JSONObject.parseObject(body).getJSONObject("trackInfo").getJSONArray("playUrlList");
-                        //ÉùÒôÃû³Æ
+                        //å£°éŸ³åç§°
                         String title = JSONObject.parseObject(body).getJSONObject("trackInfo").getString("title");
                         title = DataUtil.dealString(title);
                         for (int j = 0; j < playArray.size(); j++) {
                             JSONObject palyObj = playArray.getJSONObject(j);
-                            //²âÊÔµÄÓĞËÄÖÖÒôÆµ M4A_64 MP3_64 M4A_24 MP3_32 windowÓÃµÄÊÇ2
+                            //æµ‹è¯•çš„æœ‰å››ç§éŸ³é¢‘ M4A_64 MP3_64 M4A_24 MP3_32 windowç”¨çš„æ˜¯2
                             if ((1 == palyObj.getInteger("qualityLevel") || 2 == palyObj.getInteger("qualityLevel")) &&
                                     (palyObj.getString("type").contains("128") || palyObj.getString("type").contains("64"))) {
                                 soundMap.put(title, palyObj.getString("url"));
@@ -266,9 +266,9 @@ public class Main {
                     }
                 });
             }
-            while (true) {// µÈ´ıËùÓĞÈÎÎñ¶¼Ö´ĞĞ½áÊø
+            while (true) {// ç­‰å¾…æ‰€æœ‰ä»»åŠ¡éƒ½æ‰§è¡Œç»“æŸ
                 if (ThreadPool.getActiveCount() <= 0) {
-                    logger.info("»ñÈ¡×¨¼­'{}'Ã¿ÌõÊı¾İ»ù±¾ĞÅÏ¢Íê³É", albumTitle);
+                    logger.info("è·å–ä¸“è¾‘'{}'æ¯æ¡æ•°æ®åŸºæœ¬ä¿¡æ¯å®Œæˆ", albumTitle);
                     break;
                 }
             }
@@ -278,7 +278,7 @@ public class Main {
     }
 
     /**
-     * ·ÖÒ³´¦Àí×¨¼­Êı¾İ
+     * åˆ†é¡µå¤„ç†ä¸“è¾‘æ•°æ®
      */
     private static Map<String, JSONArray> DealAlbum() {
         String temp = info.getAlbum();
@@ -291,29 +291,29 @@ public class Main {
         } else {
             albumUrl = ALBUMURL;
         }
-        //»ñÈ¡×¨¼­Ãû³ÆºÍÉùÒôÊıÁ¿
+        //è·å–ä¸“è¾‘åç§°å’Œå£°éŸ³æ•°é‡
         for (String ablum : split) {
             String body = HttpRequest.get(albumUrl).form(getParamMap(ablum)).addHeaders(getHeaderMap(false, null, false)).execute().body();
             JSONObject jsonObject = JSON.parseObject(body);
             if (HttpStatus.HTTP_OK != Integer.parseInt(jsonObject.getString("ret"))) {
-                logger.error("¸Ã×¨¼­{}»ñÈ¡Ê±ºò±¨´í{}", ablum, jsonObject.getString("msg"));
+                logger.error("è¯¥ä¸“è¾‘{}è·å–æ—¶å€™æŠ¥é”™{}", ablum, jsonObject.getString("msg"));
                 continue;
             }
-            //¸Ã×¨¼­µÄ×ÜÊıÁ¿
+            //è¯¥ä¸“è¾‘çš„æ€»æ•°é‡
             Integer totalCount = jsonObject.getJSONObject("data").getInteger("trackTotalCount");
             String albumTitle = jsonObject.getJSONObject("data").getJSONArray("tracks")
                     .getJSONObject(0).getString("albumTitle");
             albumTitle = DataUtil.dealString(albumTitle);
             map.put(ablum, totalCount);
             chineseMap.put(ablum, albumTitle);
-            logger.info("×¨¼­<<{}>>²éÑ¯Íê³É,¹²{}ÌõÉùÒô", albumTitle, totalCount);
+            logger.info("ä¸“è¾‘<<{}>>æŸ¥è¯¢å®Œæˆ,å…±{}æ¡å£°éŸ³", albumTitle, totalCount);
         }
 
-        //¶à¸ö×¨¼­µÄidºÍÖĞÎÄÃû
+        //å¤šä¸ªä¸“è¾‘çš„idå’Œä¸­æ–‡å
         /*
-         * jsonarray¸ñÊ½,ÓÃÕâ¸öÖ÷ÒªÊÇ±£Ö¤Ë³Ğò,ÒÔ±ãºó±ßÉ¸Ñ¡×Ô¶¨ÒåÏÂÔØ¼¯ÊıÊ±ºò¹ıÂË
+         * jsonarrayæ ¼å¼,ç”¨è¿™ä¸ªä¸»è¦æ˜¯ä¿è¯é¡ºåº,ä»¥ä¾¿åè¾¹ç­›é€‰è‡ªå®šä¹‰ä¸‹è½½é›†æ•°æ—¶å€™è¿‡æ»¤
          * {
-         *   "id":""//¶ÔÓ¦trackId
+         *   "id":""//å¯¹åº”trackId
          * }
          * */
         Map<String, JSONArray> ablumSoundMap = new HashMap<>();
@@ -328,7 +328,7 @@ public class Main {
                         .addHeaders(getHeaderMap(false, null, false)).execute().body();
                 JSONObject jsonObject = JSON.parseObject(body);
                 if (HttpStatus.HTTP_OK != jsonObject.getInteger("ret")) {
-                    logger.error("¸Ã×¨¼­{}»ñÈ¡Ê±ºò±¨´í{}", ablumId, jsonObject.getString("msg"));
+                    logger.error("è¯¥ä¸“è¾‘{}è·å–æ—¶å€™æŠ¥é”™{}", ablumId, jsonObject.getString("msg"));
                 }
                 JSONArray trackArray = jsonObject.getJSONObject("data").getJSONArray("tracks");
                 if (trackArray.size() > 0) {
@@ -347,7 +347,7 @@ public class Main {
 
 
     /**
-     * ¹¹½¨Í·²ÎÊı
+     * æ„å»ºå¤´å‚æ•°
      */
     public static Map<String, String> getHeaderMap(boolean isBase, Long id, boolean needCookie) {
         Map<String, String> map = new HashMap<>();
@@ -364,7 +364,7 @@ public class Main {
     }
 
     /**
-     * ¹¹½¨´«µİ²ÎÊı,Í·Ò»´Î²éÑ¯×¨¼­Êı¾İ(»ñÈ¡×¨¼­ÊıÁ¿Ê¹ÓÃ)
+     * æ„å»ºä¼ é€’å‚æ•°,å¤´ä¸€æ¬¡æŸ¥è¯¢ä¸“è¾‘æ•°æ®(è·å–ä¸“è¾‘æ•°é‡ä½¿ç”¨)
      */
     public static Map<String, Object> getParamMap(String album) {
         Map<String, Object> map = new HashMap<>();
@@ -375,7 +375,7 @@ public class Main {
     }
 
     /**
-     * ¸ù¾İÒ³Êı¹¹½¨²ÎÊı
+     * æ ¹æ®é¡µæ•°æ„å»ºå‚æ•°
      */
     public static Map<String, Object> getParamMap(String album, int pageNum) {
         Map<String, Object> map = new HashMap<>();
@@ -386,7 +386,7 @@ public class Main {
     }
 
     /**
-     * ¹¹½¨²ÎÊı
+     * æ„å»ºå‚æ•°
      */
     public static Map<String, Object> getBaseParamMap(Long id) {
         Map<String, Object> map = new HashMap<>();
