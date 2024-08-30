@@ -1,4 +1,4 @@
-package com.wgx.util;
+package com.wgx.util.decrypt;
 
 import cn.hutool.core.util.StrUtil;
 

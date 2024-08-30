@@ -9,7 +9,10 @@ import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
+import com.wgx.domain.ConfigInfo;
 import com.wgx.util.*;
+import com.wgx.util.decrypt.PcAesDecryptUtil;
+import com.wgx.util.decrypt.WebDecryptUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -22,7 +25,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * 主程序
+ * 主程序,针对url进行下载
  *
  * @author wgx
  * @date 2024/8/20
@@ -223,7 +226,16 @@ public class Main {
             for (int i = start; i < end; i++) {
                 JSONObject jsonObject = array.getJSONObject(i);
                 Long trackId = jsonObject.getLong("id");
-
+                //每请求30个,睡上1s
+                //todo 需要测试下客户端是根据频率限制还是总数来进行限制的
+               /* if(i%30==0){
+                    try {
+                        System.out.println("睡1s");
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }*/
                 threadPool.submit(() -> {
                     int retry = 1;
                     //失败则进行重试

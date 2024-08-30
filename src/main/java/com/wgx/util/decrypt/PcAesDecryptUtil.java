@@ -1,4 +1,4 @@
-package com.wgx.util;
+package com.wgx.util.decrypt;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;

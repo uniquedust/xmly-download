@@ -1,8 +1,8 @@
-package com.wgx.util;
+package com.wgx.util.decrypt;
 
 import cn.hutool.core.util.StrUtil;
-import com.wgx.util.CryptoUtils.Algorithm.Encryption;
-import com.wgx.util.CryptoUtils.Algorithm.Signing;
+import com.wgx.util.decrypt.CryptoUtils.Algorithm.Encryption;
+import com.wgx.util.decrypt.CryptoUtils.Algorithm.Signing;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;

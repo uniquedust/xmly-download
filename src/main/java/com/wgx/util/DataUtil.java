@@ -1,6 +1,6 @@
 package com.wgx.util;
 
-import com.wgx.ConfigInfo;
+import com.wgx.domain.ConfigInfo;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
