@@ -32,5 +32,8 @@ public class Test {
             System.out.println(m.group(2));
             System.out.println(m.groupCount());
         }*/
+
+        System.out.println(5/4);
+        System.out.println(7/4);
     }
 }

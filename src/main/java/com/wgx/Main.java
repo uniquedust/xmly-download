@@ -11,7 +11,7 @@ import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.wgx.domain.ConfigInfo;
 import com.wgx.util.*;
-import com.wgx.util.decrypt.PcAesDecryptUtil;
+import com.wgx.util.decrypt.PcDecryptUtil;
 import com.wgx.util.decrypt.WebDecryptUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -180,7 +180,7 @@ public class Main {
                 String soundName = sound.getKey();
                 String soundCryptLink;
                 if (info.getIsPc()) {
-                    soundCryptLink = PcAesDecryptUtil.decrypt(sound.getValue(), SECRETKEY);
+                    soundCryptLink = PcDecryptUtil.decrypt(sound.getValue(), SECRETKEY);
                 } else {
                     soundCryptLink = WebDecryptUtil.getSoundCryptLink(sound.getValue());
                 }

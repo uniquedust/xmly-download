@@ -44,6 +44,14 @@
             <version>2.0.9</version>
         </dependency>
 
+        <!--导入方法 https://blog.csdn.net/m0_37657585/article/details/81008428-->
+        <dependency>
+            <groupId>com.test</groupId>
+            <artifactId>wasmer-jni</artifactId>
+            <version>0.3.0</version>
+        </dependency>
+
+
 
     </dependencies>
 
