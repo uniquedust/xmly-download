@@ -9,9 +9,9 @@
     * 支持多个自定义音频下载
 * **2024/8/29**
     * 支持使用pc客户端的url及cookie进行下载，但是同样会有下载次数限制，似乎也是600集左右，弄完客户端直接没法使用，切换音频一直报系统繁忙
-* **2024/9/5**
+* **2024/9/6**
     * **尝试解析xm文件,失败**,主要问题出在了解析WebAssembly上,有兴趣的可以看下(没兴趣的话可以直接把报错的类和pom对应引用删除掉即可,运行main.java)
-    
+    * 解析的话还是用python或者nodejs吧...
 
 # 二、配置
 配置文件为application.properties,注意点都写在里面了，直接运行Main.java即可
@@ -49,7 +49,7 @@ Java的文件I/O处理：Java的I/O处理通常更为结构化，许多音频库
  
 **所以最后使用了一下nodejs脚本**
 ## 2、WebAssembly使用失败
-找了半天,找到一个jar包,还没有上传到maven仓库,只能下载下来,自己打包到本地仓库  
+找了半天,找到一个jar包,还没有上传到maven仓库,只能下载下来,自己打包到本地仓库,jar包也上传了,在resources下面
 https://github.com/wasmerio/wasmer-java
 ```xml
 mvn install:install-file --settings 
