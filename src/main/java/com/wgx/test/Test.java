@@ -35,5 +35,10 @@ public class Test {
 
         System.out.println(5/4);
         System.out.println(7/4);
+        System.out.println(99/100);
+
+        String xx="xxxxxxxxxxxxxxx##2";
+        System.out.println(xx.split("##")[1]);
+        System.out.println(String.format("%03d", Integer.parseInt(xx.split("##")[1])));
     }
 }

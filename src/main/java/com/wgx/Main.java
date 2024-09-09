@@ -55,6 +55,8 @@ public class Main {
 
     private static final ConfigInfo info;
 
+    private static String formatStr;
+
     static {
         info = DataUtil.getProperty();
     }
@@ -86,7 +88,7 @@ public class Main {
             Map<String, JSONArray> map = DealAlbum();
             //2、获取专辑每个数据基本信息
             Map<String, Map<String, String>> albumMap = getAlbum(map);
-            logger.info("==========即将保存数据到本地,请耐心等待=======" );
+            logger.info("==========即将保存数据到本地,请耐心等待=======");
             //3、解密及下载数据到本地
             assert albumMap != null;
             DownAlbum(albumMap);
@@ -176,15 +178,25 @@ public class Main {
                 return;
             }
             logger.info("专辑{}成功获取到{}条声音", albumTitle, soundMap.size());
+
             for (Map.Entry<String, String> sound : soundMap.entrySet()) {
                 String soundName = sound.getKey();
                 String soundCryptLink;
+                String soundInfo = sound.getValue();
+                String[] split = soundInfo.split("##");
+                String url = split[0];
                 if (info.getIsPc()) {
-                    soundCryptLink = PcDecryptUtil.decrypt(sound.getValue(), SECRETKEY);
+                    soundCryptLink = PcDecryptUtil.decrypt(url, SECRETKEY);
                 } else {
-                    soundCryptLink = WebDecryptUtil.getSoundCryptLink(sound.getValue());
+                    soundCryptLink = WebDecryptUtil.getSoundCryptLink(url);
                 }
-                String soundPath = savePath + File.separator + albumTitle + File.separator + soundName + ".m4a";
+                String soundPath;
+                if (info.getUseAutoNumber() && split.length == 2) {
+                    soundPath = savePath + File.separator + albumTitle + File.separator + String.format(formatStr, Integer.parseInt(split[1])) + soundName + ".m4a";
+                } else {
+                    soundPath = savePath + File.separator + albumTitle + File.separator + soundName + ".m4a";
+                }
+
                 if (!new File(soundPath).exists()) {
                     threadPool.submit(() -> {
                         HttpUtil.downloadFile(soundCryptLink, soundPath);
@@ -226,16 +238,9 @@ public class Main {
             for (int i = start; i < end; i++) {
                 JSONObject jsonObject = array.getJSONObject(i);
                 Long trackId = jsonObject.getLong("id");
-                //每请求30个,睡上1s
-                //todo 需要测试下客户端是根据频率限制还是总数来进行限制的
-               /* if(i%30==0){
-                    try {
-                        System.out.println("睡1s");
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }*/
+
+
+                int order = i;
                 threadPool.submit(() -> {
                     int retry = 1;
                     //失败则进行重试
@@ -253,14 +258,20 @@ public class Main {
                         //声音名称
                         String title = JSONObject.parseObject(body).getJSONObject("trackInfo").getString("title");
                         title = DataUtil.dealString(title);
+                        boolean flag = true;
                         for (int j = 0; j < playArray.size(); j++) {
                             JSONObject palyObj = playArray.getJSONObject(j);
                             //测试的有四种音频 M4A_64 MP3_64 M4A_24 MP3_32 window用的是2
                             if ((1 == palyObj.getInteger("qualityLevel") || 2 == palyObj.getInteger("qualityLevel")) &&
                                     (palyObj.getString("type").contains("128") || palyObj.getString("type").contains("64"))) {
-                                soundMap.put(title, palyObj.getString("url"));
+                                //以两个##分隔开，第一个是音频地址，第二个是序号
+                                soundMap.put(title, palyObj.getString("url") + "##" + (order + 1));
+                                flag = false;
                                 break;
                             }
+                        }
+                        if (flag) {
+                            System.out.println("没有找到128k的音频");
                         }
                         retry = Integer.MAX_VALUE;
                     }
@@ -293,7 +304,7 @@ public class Main {
         }
         //获取专辑名称和声音数量
         for (String ablum : split) {
-            String body = HttpRequest.get(albumUrl).form(getParamMap(ablum)).addHeaders(getHeaderMap(false, null, false)).execute().body();
+            String body = HttpRequest.get(albumUrl).form(getParamMap(ablum)).addHeaders(getHeaderMap(false, null, true)).execute().body();
             JSONObject jsonObject = JSON.parseObject(body);
             if (HttpStatus.HTTP_OK != Integer.parseInt(jsonObject.getString("ret"))) {
                 logger.error("该专辑{}获取时候报错{}", ablum, jsonObject.getString("msg"));
@@ -301,6 +312,15 @@ public class Main {
             }
             //该专辑的总数量
             Integer totalCount = jsonObject.getJSONObject("data").getInteger("trackTotalCount");
+            //设置手动编号长度
+            int formatCount = totalCount / 100;
+            if (formatCount < 10) {
+                formatStr = "%03d";
+            } else if (formatCount < 100) {
+                formatStr = "%04d";
+            } else if (formatCount < 1000) {
+                formatStr = "%05d";
+            }
             String albumTitle = jsonObject.getJSONObject("data").getJSONArray("tracks")
                     .getJSONObject(0).getString("albumTitle");
             albumTitle = DataUtil.dealString(albumTitle);
@@ -325,7 +345,7 @@ public class Main {
             JSONArray array = new JSONArray();
             for (int i = 0; i <= pageNum; i++) {
                 String body = HttpRequest.get(albumUrl).form(getParamMap(ablumId, i + 1))
-                        .addHeaders(getHeaderMap(false, null, false)).execute().body();
+                        .addHeaders(getHeaderMap(false, null, true)).execute().body();
                 JSONObject jsonObject = JSON.parseObject(body);
                 if (HttpStatus.HTTP_OK != jsonObject.getInteger("ret")) {
                     logger.error("该专辑{}获取时候报错{}", ablumId, jsonObject.getString("msg"));

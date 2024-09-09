@@ -21,4 +21,6 @@ public class ConfigInfo {
     private String album;
 
     private String partOfAlbum;
+
+    private Boolean useAutoNumber;
 }

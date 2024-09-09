@@ -38,6 +38,7 @@ public class DataUtil {
         info.setAlbum(properties.getProperty("album"));
         info.setSounds(properties.getProperty("sounds"));
         info.setIsPc(Boolean.parseBoolean(properties.getProperty("isPc", "false")));
+        info.setUseAutoNumber(Boolean.parseBoolean(properties.getProperty("useAutoNumber", "true")));
         return info;
     }
 
