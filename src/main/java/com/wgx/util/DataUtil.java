@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Properties;
 
 /**
@@ -51,6 +52,38 @@ public class DataUtil {
         title = title.replaceAll("[\\\\/:*?<>|]", "");
         //去除掉所有空格及换行
         return title.replaceAll(" +|\\n", "");
+    }
+
+    /**
+     * 根据魔数判断解密后的音频格式,对应python里python-magic的部分
+     */
+    public static String findExt(byte[] audioData) {
+        String head = new String(Arrays.copyOfRange(audioData, 0, Math.min(16, audioData.length)), StandardCharsets.ISO_8859_1);
+        //m4a/mp4: 第4~8字节是ftyp
+        if (head.length() >= 8 && head.substring(4, 8).equals("ftyp")) {
+            return "m4a";
+        }
+        if (head.startsWith("fLaC")) {
+            return "flac";
+        }
+        if (head.startsWith("RIFF") && head.length() >= 12 && head.substring(8, 12).equals("WAVE")) {
+            return "wav";
+        }
+        //mp3: ID3头 或 帧同步字节0xFFEx
+        if (head.startsWith("ID3") || (audioData.length >= 2 && (audioData[0] & 0xff) == 0xff && (audioData[1] & 0xe0) == 0xe0)) {
+            return "mp3";
+        }
+        throw new RuntimeException("无法识别解密后的音频格式,前16字节: " + head);
+    }
+
+    /**
+     * 处理文件名里不支持的特殊字符(替换为空格),对应python的replace_invalid_chars
+     */
+    public static String replaceInvalidChars(String name) {
+        if (name == null || name.isEmpty()) {
+            return "未知";
+        }
+        return name.replaceAll("[/\\\\:*?\"<>|]", " ").trim();
     }
 
 

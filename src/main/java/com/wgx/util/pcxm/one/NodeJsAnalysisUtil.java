@@ -1,7 +1,6 @@
-package com.wgx.util.pcxm;
+package com.wgx.util.pcxm.one;
 
 import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONObject;
 import com.wgx.domain.XmInfo;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -10,7 +9,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
 /**
- * 使用nodejs库解析xm文件
+ * 使用nodejs库解析xm文件的id3标签(方案一)
  * https://blog.csdn.net/m0_67087330/article/details/134601599
  *
  * @author wgx
@@ -46,19 +45,14 @@ public class NodeJsAnalysisUtil {
             // 等待子进程结束
             int exitCode = process.waitFor();
             //代表成功
-            if(exitCode ==0){
+            if (exitCode == 0) {
                 return JSON.parseObject(output.toString(), XmInfo.class);
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(e.getMessage(), e);
         }
         return null;
-    }
-
-    public static void main(String[] args) {
-        XmInfo parameter = getParameter("d:/1.xm");
-        System.out.println(parameter);
     }
 
 }

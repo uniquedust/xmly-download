@@ -9,8 +9,10 @@
     <version>1.0-SNAPSHOT</version>
 
     <properties>
-        <maven.compiler.source>8</maven.compiler.source>
-        <maven.compiler.target>8</maven.compiler.target>
+        <!--方案二用的Chicory要求JDK11+,所以整体从8升到11,请用JDK11/17构建运行-->
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
     <dependencies>
@@ -44,14 +46,27 @@
             <version>2.0.9</version>
         </dependency>
 
-        <!--导入方法 https://blog.csdn.net/m0_37657585/article/details/81008428-->
+        <!--方案一: wasmer-java(JNI)运行wasm,只支持windows/linux amd64
+            jar没传到maven仓库,需要先手动install到本地仓库(命令见README)-->
         <dependency>
             <groupId>com.test</groupId>
             <artifactId>wasmer-jni</artifactId>
             <version>0.3.0</version>
         </dependency>
 
+        <!--方案二: Chicory纯java的wasm解释器,不依赖本地dll,需要JDK11+-->
+        <dependency>
+            <groupId>com.dylibso.chicory</groupId>
+            <artifactId>runtime</artifactId>
+            <version>1.4.0</version>
+        </dependency>
 
+        <!--解密完成后重写音频标签(标题/专辑/作者)-->
+        <dependency>
+            <groupId>net.jthink</groupId>
+            <artifactId>jaudiotagger</artifactId>
+            <version>3.0.1</version>
+        </dependency>
 
     </dependencies>
 
